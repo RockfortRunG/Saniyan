@@ -31,7 +31,21 @@
             </manifest>
           </archive>
         </configuration>
-      </plugin>
+</plugin>
+<plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+                        <version>2.1</version>
+
+                        <executions>
+                            <execution>
+                                <inherited>false</inherited>
+                                <id>build-rpm</id>
+                                <goals>
+                                    <goal>attached-rpm</goal>
+                                </goals>
+                            </execution>
+                        </executions>
     </plugins>
   </build>
 </project>
