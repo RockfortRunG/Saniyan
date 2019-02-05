@@ -1,105 +1,194 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-
-	<groupId>au.id.james-vella</groupId>
-	<artifactId>myservice</artifactId>
-	<version>0.1</version>
-	<packaging>jar</packaging>
-
-	<name>myservice</name>
-	<description>Java RPM example with Spring Boot</description>
-
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.2.3.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<start-class>au.id.jamesvella.myservice.MyserviceApplication</start-class>
-		<java.version>1.7</java.version>
-	</properties>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-	
-	<build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-
-            <!-- exclude resources to be externalized from jar -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/myservice.properties</exclude>
-                        <exclude>**/logback.xml</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-
-            <!-- make tar.gz of rpm artifacts -->
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.2</version>
-                <executions>
-                    <execution>
-                        <id>make tar.gz of rpm artifacts</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/assembly/rpm-assembly.xml</descriptor>
-                    </descriptors>
-                </configuration>
-            </plugin>
-
-            <!-- Update rpm spec file with pom version -->
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
-                <executions>
-                    <execution>
-                        <id>Update rpm spec file with pom version</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
+<profiles>
+    <profile>
+        <id>rpm</id>
+        <activation>
+            <os>
+                <family>linux</family>
+            </os>
+        </activation>
+        <build>
+            <finalName>Finalname</finalName>
+            <pluginManagement>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>2.1.1</version>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.springsource.bundlor</groupId>
+                        <artifactId>com.springsource.bundlor.maven</artifactId>
+                        <version>1.0.0.M1B</version>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <inherited>false</inherited>
                         <configuration>
-                            <outputDirectory>${basedir}/target/</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/assembly</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
+                            <descriptorRefs>
+                                <descriptorRef>project</descriptorRef>
+                            </descriptorRefs>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-	</build>
-</project>
+                    </plugin>
+                </plugins>
+            </pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>1.6</source>
+                        <target>1.6</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3.1</version>
+                    <configuration>
+                        <webResources>
+                            <resource>
+                                <directory>src/main/resources</directory>
+                                <filtering>false</filtering>
+                            </resource>
+                            <resource>
+                                <directory>src/main/java</directory>
+                                <filtering>true</filtering>
+                            </resource>
+                            <resource>
+                                <!-- this is relative to the pom.xml directory -->
+                                <directory>src/test/java</directory>
+                                <!-- <excludes> <exclude>**/*Test.java</exclude> <exclude>**/*AllTests.java</exclude> 
+                                    <exclude>**/*.java</exclude> </excludes> -->
+                            </resource>
+                        </webResources>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <skip>false</skip>
+                        <includes>
+                            <include>**/*.java</include>
+                        </includes>
+                        <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                        <printSummary>true</printSummary>
+                        <useFile>true</useFile>
+                        <forkMode>pertest</forkMode>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>
+                                    org.springframework.batch.core.launch.support.CommandLineJobRunner
+                                </mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>rpm-maven-plugin</artifactId>
+                    <version>2.0.1</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <id>package-development</id>
+                            <goals>
+                                <goal>rpm</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <copyright>No body</copyright>
+                        <group>Development</group>
+                        <description>MavenRecipe:RPMPackage.</description>
+                        <mappings>
+                            <mapping>
+                                <directory>/opt/tomcat/webapps/${project.build.finalName}</directory>
+                                <sources>
+                                    <source>
+                                        <location>target/${project.build.finalName}</location>
+                                    </source>
+                                </sources>
+                            </mapping>
+                        </mappings>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+    <profile>
+        <id>deb</id>
+        <activation>
+            <os>
+                <family>linux</family>
+            </os>
+        </activation>
+        <build>
+            <finalName>FinalName</finalName>
+            <pluginManagement>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>2.1.1</version>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.springsource.bundlor</groupId>
+                        <artifactId>com.springsource.bundlor.maven</artifactId>
+                        <version>1.0.0.M1B</version>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>project</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </pluginManagement>
+            <plugins>
+                <plugin>
+
+                    <groupId>org.vafer</groupId>
+                    <artifactId>jdeb</artifactId>
+                    <version>1.0</version>
+                    <executions>
+                        <execution>
+                            <id>deb</id>
+                            <phase>install</phase>
+                            <goals>
+                                <goal>jdeb</goal>
+                            </goals>
+                            <configuration>
+                                <verbose>true</verbose>
+                                <deb>target/${project.build.finalName}${project.version}.deb</deb>
+                                <controlDir>/home/dbobra/Workspace/project-workspace/projectname/src/deb/control</controlDir>
+                                <dataSet>
+                                    <data>
+                                        <src>${project.build.directory}/${project.build.finalName}</src>
+                                        <type>directory</type>
+                                        <mapper>
+                                            <type>perm</type>
+                                            <prefix>/home/dbobra/installed/tomcat/webapps/${project.build.finalName}</prefix>
+                                        </mapper>
+                                    </data>
+                                </dataSet>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+            </plugins>
+
+        </build>
+    </profile>
